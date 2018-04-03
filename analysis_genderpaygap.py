@@ -7,66 +7,64 @@ import csv
 from collections import OrderedDict
 import scraperwiki
 
+grouplinksurl='https://raw.githubusercontent.com/edudatalab/genderpaygap/master/data/unedited/grouplinks_edubaseallacademiesandfree20170403.csv'
+paygapurl='https://raw.githubusercontent.com/edudatalab/genderpaygap/master/data/unedited/UK%20Gender%20Pay%20Gap%20Data%20-%202017%20to%202018.csv'
+workforceurl='https://raw.githubusercontent.com/edudatalab/genderpaygap/master/data/edited/SFR25_2017_Underlying_Data.csv'
+
 # READ SOURCE FILES
-os.chdir('S:\\4 Website, blog\\Blogposts\\Gender pay gap\\data\\unedited')
-with open('grouplinks_edubaseallacademiesandfree20170403.csv') as grouplinkscsv:
-    reader = csv.DictReader(grouplinkscsv)
-    for row in reader:
-        if row['Group Type']=='Single-academy trust' or row['Group Type']=='Multi-academy trust':
-            school=OrderedDict([])
-            school['Group Name']=row['Group Name'].replace('\xa0', ' ').replace('\x92', '\'')       # hacky, but successfully replaces characters that prevent saving
-            school['CompanyNumber']=row['Companies House Number']
-            school['URN']=row['URN']
-            os.chdir('S:\\4 Website, blog\\Blogposts\\Gender pay gap')
-            print school
-            scraperwiki.sql.save(['URN'],school,"grouplinks")
-
-os.chdir('S:\\4 Website, blog\\Blogposts\\Gender pay gap\\data\\unedited')
-with open('UK Gender Pay Gap Data - 2017 to 2018.csv') as paygapcsv:
-    reader = csv.DictReader(paygapcsv)
-    i=1
-    for row in reader:
-        employer=OrderedDict([])
-        employer['EmployerName']=row['EmployerName'].replace('\xbd', '').replace('\xbf', '').replace('\xef', 'i').replace('\xe2', 'a').replace('\x80', '').replace('\x99', ' ').replace('\x0b', '').replace('\xc3', 'A').replace('\xa9', '').replace('\x93', '\"').replace('\x89', '').replace('\x96', '').replace('\xae', '').replace('\x88', '').replace('\xb6', '').replace('\xa1', '').replace('\x98', '').replace('\x82', '').replace('\xac', '')
-        employer['Address']=row['Address'].replace('\xbd', '').replace('\xbf', '').replace('\xef', 'i').replace('\xe2', 'a').replace('\x80', '').replace('\x99', ' ').replace('\x0b', '').replace('\xc3', 'A').replace('\xa9', '').replace('\x93', '\"').replace('\x89', '').replace('\x96', '').replace('\xae', '').replace('\x88', '').replace('\xb6', '').replace('\xa1', '').replace('\x98', '').replace('\x82', '').replace('\xac', '')
-        employer['SicCodes']=row['SicCodes']
-        if row['CompanyNumber']!='':
-            employer['CompanyNumber']=row['CompanyNumber']
-        else:       # create spoof co. number
-            employer['CompanyNumber']='X'+str(i)
-            i+=1
-        employer['DiffMeanHourlyPercent']=row['DiffMeanHourlyPercent']
-        employer['DiffMedianHourlyPercent']=row['DiffMedianHourlyPercent']
-        employer['DiffMeanBonusPercent']=row['DiffMeanBonusPercent']
-        employer['DiffMedianBonusPercent']=row['DiffMedianBonusPercent']
-        employer['MaleBonusPercent']=row['MaleBonusPercent']
-        employer['FemaleBonusPercent']=row['FemaleBonusPercent']
-        employer['MaleLowerQuartile']=row['MaleLowerQuartile']
-        employer['FemaleLowerQuartile']=row['FemaleLowerQuartile']
-        employer['MaleLowerMiddleQuartile']=row['MaleLowerMiddleQuartile']
-        employer['FemaleLowerMiddleQuartile']=row['FemaleLowerMiddleQuartile']
-        employer['MaleUpperMiddleQuartile']=row['MaleUpperMiddleQuartile']
-        employer['FemaleUpperMiddleQuartile']=row['FemaleUpperMiddleQuartile']
-        employer['MaleTopQuartile']=row['MaleTopQuartile']
-        employer['FemaleTopQuartile']=row['FemaleTopQuartile']
-        employer['CompanyLinkToGPGInfo']=row['CompanyLinkToGPGInfo'].replace('\xbd', '').replace('\xbf', '').replace('\xef', 'i').replace('\xe2', 'a').replace('\x80', '').replace('\x99', ' ').replace('\x0b', '').replace('\xc3', 'A').replace('\xa9', '').replace('\x93', '\"').replace('\x89', '').replace('\x96', '').replace('\xae', '').replace('\x88', '').replace('\xb6', '').replace('\xa1', '').replace('\x98', '').replace('\x82', '').replace('\xac', '')
-        employer['ResponsiblePerson']=row['ResponsiblePerson'].replace('\xbd', '').replace('\xbf', '').replace('\xef', 'i').replace('\xe2', 'a').replace('\x80', '').replace('\x99', ' ').replace('\x0b', '').replace('\xc3', 'A').replace('\xa9', '').replace('\x93', '\"').replace('\x89', '').replace('\x96', '').replace('\xae', '').replace('\x88', '').replace('\xb6', '').replace('\xa1', '').replace('\x98', '').replace('\x82', '').replace('\xac', '')
-        employer['EmployerSize']=row['EmployerSize']
-        employer['CurrentName']=row['CurrentName'].replace('\xbd', '').replace('\xbf', '').replace('\xef', 'i').replace('\xe2', 'a').replace('\x80', '').replace('\x99', ' ').replace('\x0b', '').replace('\xc3', 'A').replace('\xa9', '').replace('\x93', '\"').replace('\x89', '').replace('\x96', '').replace('\xae', '').replace('\x88', '').replace('\xb6', '').replace('\xa1', '').replace('\x98', '').replace('\x82', '').replace('\xac', '')
-        os.chdir('S:\\4 Website, blog\\Blogposts\\Gender pay gap')
-        print employer
-        scraperwiki.sql.save(['CompanyNumber'],employer,"paygap")
-
-os.chdir('S:\\4 Website, blog\\Blogposts\\Gender pay gap\\data\\edited')
-with open('SFR25_2017_Underlying_Data.csv') as workforcecsv:
-    reader = csv.DictReader(workforcecsv)
-    for row in reader:
+grouplinkscsv=requests.get(grouplinksurl)
+grouplinkscsv=grouplinkscsv.iter_lines()      # is required in order for csv file to be read correctly, without errors caused by new-line characters
+reader=csv.DictReader(grouplinkscsv)
+for row in reader:
+    if row['Group Type']=='Single-academy trust' or row['Group Type']=='Multi-academy trust':
         school=OrderedDict([])
+        school['Group Name']=row['Group Name'].replace('\xa0', ' ').replace('\x92', '\'')       # hacky, but successfully replaces characters that prevent saving
+        school['CompanyNumber']=row['Companies House Number']
         school['URN']=row['URN']
-        school['Total School Workforce (Headcount)']=row['Total School Workforce (Headcount)']
-        os.chdir('S:\\4 Website, blog\\Blogposts\\Gender pay gap')
-        print school
-        scraperwiki.sql.save(['URN'],school,"workforce")
+        scraperwiki.sql.save(['URN'],school,"grouplinks")
+
+paygapcsv=requests.get(paygapurl)
+paygapcsv=paygapcsv.iter_lines()      # is required in order for csv file to be read correctly, without errors caused by new-line characters
+reader = csv.DictReader(paygapcsv)
+i=1
+for row in reader:
+    employer=OrderedDict([])
+    employer['EmployerName']=row['EmployerName'].replace('\xbd', '').replace('\xbf', '').replace('\xef', 'i').replace('\xe2', 'a').replace('\x80', '').replace('\x99', ' ').replace('\x0b', '').replace('\xc3', 'A').replace('\xa9', '').replace('\x93', '\"').replace('\x89', '').replace('\x96', '').replace('\xae', '').replace('\x88', '').replace('\xb6', '').replace('\xa1', '').replace('\x98', '').replace('\x82', '').replace('\xac', '')
+    employer['Address']=row['Address'].replace('\xbd', '').replace('\xbf', '').replace('\xef', 'i').replace('\xe2', 'a').replace('\x80', '').replace('\x99', ' ').replace('\x0b', '').replace('\xc3', 'A').replace('\xa9', '').replace('\x93', '\"').replace('\x89', '').replace('\x96', '').replace('\xae', '').replace('\x88', '').replace('\xb6', '').replace('\xa1', '').replace('\x98', '').replace('\x82', '').replace('\xac', '')
+    employer['SicCodes']=row['SicCodes']
+    if row['CompanyNumber']!='':
+        employer['CompanyNumber']=row['CompanyNumber']
+    else:       # create spoof co. number
+        employer['CompanyNumber']='X'+str(i)
+        i+=1
+    employer['DiffMeanHourlyPercent']=row['DiffMeanHourlyPercent']
+    employer['DiffMedianHourlyPercent']=row['DiffMedianHourlyPercent']
+    employer['DiffMeanBonusPercent']=row['DiffMeanBonusPercent']
+    employer['DiffMedianBonusPercent']=row['DiffMedianBonusPercent']
+    employer['MaleBonusPercent']=row['MaleBonusPercent']
+    employer['FemaleBonusPercent']=row['FemaleBonusPercent']
+    employer['MaleLowerQuartile']=row['MaleLowerQuartile']
+    employer['FemaleLowerQuartile']=row['FemaleLowerQuartile']
+    employer['MaleLowerMiddleQuartile']=row['MaleLowerMiddleQuartile']
+    employer['FemaleLowerMiddleQuartile']=row['FemaleLowerMiddleQuartile']
+    employer['MaleUpperMiddleQuartile']=row['MaleUpperMiddleQuartile']
+    employer['FemaleUpperMiddleQuartile']=row['FemaleUpperMiddleQuartile']
+    employer['MaleTopQuartile']=row['MaleTopQuartile']
+    employer['FemaleTopQuartile']=row['FemaleTopQuartile']
+    employer['CompanyLinkToGPGInfo']=row['CompanyLinkToGPGInfo'].replace('\xbd', '').replace('\xbf', '').replace('\xef', 'i').replace('\xe2', 'a').replace('\x80', '').replace('\x99', ' ').replace('\x0b', '').replace('\xc3', 'A').replace('\xa9', '').replace('\x93', '\"').replace('\x89', '').replace('\x96', '').replace('\xae', '').replace('\x88', '').replace('\xb6', '').replace('\xa1', '').replace('\x98', '').replace('\x82', '').replace('\xac', '')
+    employer['ResponsiblePerson']=row['ResponsiblePerson'].replace('\xbd', '').replace('\xbf', '').replace('\xef', 'i').replace('\xe2', 'a').replace('\x80', '').replace('\x99', ' ').replace('\x0b', '').replace('\xc3', 'A').replace('\xa9', '').replace('\x93', '\"').replace('\x89', '').replace('\x96', '').replace('\xae', '').replace('\x88', '').replace('\xb6', '').replace('\xa1', '').replace('\x98', '').replace('\x82', '').replace('\xac', '')
+    employer['EmployerSize']=row['EmployerSize']
+    employer['CurrentName']=row['CurrentName'].replace('\xbd', '').replace('\xbf', '').replace('\xef', 'i').replace('\xe2', 'a').replace('\x80', '').replace('\x99', ' ').replace('\x0b', '').replace('\xc3', 'A').replace('\xa9', '').replace('\x93', '\"').replace('\x89', '').replace('\x96', '').replace('\xae', '').replace('\x88', '').replace('\xb6', '').replace('\xa1', '').replace('\x98', '').replace('\x82', '').replace('\xac', '')
+    scraperwiki.sql.save(['CompanyNumber'],employer,"paygap")
+
+workforcecsv=requests.get(workforceurl)
+workforcecsv=workforcecsv.iter_lines()      # is required in order for csv file to be read correctly, without errors caused by new-line characters
+reader = csv.DictReader(workforcecsv)
+for row in reader:
+    school=OrderedDict([])
+    school['URN']=row['URN']
+    school['Total School Workforce (Headcount)']=row['Total School Workforce (Headcount)']
+    scraperwiki.sql.save(['URN'],school,"workforce")
 
 
 # ANALYSIS
@@ -177,19 +175,16 @@ missingtrustsdata=scraperwiki.sqlite.execute('''
 
 
 # SAVE RESULT OF ANALYSIS
-os.chdir('S:\\4 Website, blog\\Blogposts\\Gender pay gap')
 with open('trustsgenderpaygap.csv', 'wb') as trustsgenderpaygapcsv:
     writer=csv.writer(trustsgenderpaygapcsv)
     writer.writerows(trustsgenderpaygapkeys)
     writer.writerows(trustsgenderpaygapdata)
 
-os.chdir('S:\\4 Website, blog\\Blogposts\\Gender pay gap')
 with open('trustsgenderpaygapforchart.csv', 'wb') as trustsgenderpaygapforchartcsv:
     writer=csv.writer(trustsgenderpaygapforchartcsv)
     writer.writerows(trustsgenderpaygapforchartkeys)
     writer.writerows(trustsgenderpaygapforchartdata)
 
-os.chdir('S:\\4 Website, blog\\Blogposts\\Gender pay gap')
 with open('missingtrusts.csv', 'wb') as missingtrustscsv:
     writer=csv.writer(missingtrustscsv)
     writer.writerows(missingtrustskeys)
